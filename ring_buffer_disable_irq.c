@@ -131,7 +131,7 @@ static void disable_irq_clear(ring_buffer_t *rb)
 
 /* Exported constant ---------------------------------------------------------*/
 
-const struct ring_buffer_ops ring_buffer_disable_irq_ops = {
+const ring_buffer_ops_t ring_buffer_disable_irq_ops = {
     .write       = disable_irq_write,
     .read        = disable_irq_read,
     .write_multi = disable_irq_write_multi,

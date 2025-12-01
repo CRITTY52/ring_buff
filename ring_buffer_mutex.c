@@ -171,7 +171,7 @@ static void mutex_clear(ring_buffer_t *rb)
 
 /* Exported constant ---------------------------------------------------------*/
 
-const struct ring_buffer_ops ring_buffer_mutex_ops = {
+const ring_buffer_ops_t ring_buffer_mutex_ops = {
     .write       = mutex_write,
     .read        = mutex_read,
     .write_multi = mutex_write_multi,

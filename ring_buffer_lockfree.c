@@ -47,7 +47,8 @@ static bool lockfree_write(ring_buffer_t *rb, uint8_t data)
 {
     uint16_t next_head = (rb->head + 1) % rb->size;
     
-    if (next_head == rb->tail) {
+    if (next_head == rb->tail) 
+	{
 #if RING_BUFFER_ENABLE_STATISTICS
         rb->overflow_count++;
 #endif
@@ -66,7 +67,8 @@ static bool lockfree_write(ring_buffer_t *rb, uint8_t data)
 
 static bool lockfree_read(ring_buffer_t *rb, uint8_t *data)
 {
-    if (rb->tail == rb->head) {
+    if (rb->tail == rb->head) 
+	{
         return false;  /* 空 */
     }
     
@@ -85,7 +87,8 @@ static uint16_t lockfree_write_multi(ring_buffer_t *rb, const uint8_t *data, uin
     uint16_t free = lockfree_free_space_internal(rb);
     uint16_t to_write = (len > free) ? free : len;
     
-    if (to_write == 0) {
+    if (to_write == 0)
+	{
 #if RING_BUFFER_ENABLE_STATISTICS
         if (len > 0) rb->overflow_count++;
 #endif
@@ -181,7 +184,7 @@ static void lockfree_clear(ring_buffer_t *rb)
 
 /* Exported constant ---------------------------------------------------------*/
 
-const struct ring_buffer_ops ring_buffer_lockfree_ops = {
+const ring_buffer_ops_t ring_buffer_lockfree_ops = {
     .write       = lockfree_write,
     .read        = lockfree_read,
     .write_multi = lockfree_write_multi,
