@@ -3,7 +3,7 @@
  * @brief   环形缓冲区配置文件
  * @author  CRITTY.熙影
  * @date    2024-12-27
- * @version 2.1
+ * @version 2.2
  */
 
 #ifndef __RING_BUFFER_CONFIG_H
@@ -57,7 +57,7 @@ extern "C" {
 
 #if RING_BUFFER_ENABLE_DISABLE_IRQ
 
-/* Cortex-M3/M4/M7/M33 */
+/* 选择目标平台 */
 #define PLATFORM_CORTEX_M
 
 #ifdef PLATFORM_CORTEX_M
@@ -88,13 +88,13 @@ extern "C" {
 
 #endif /* RING_BUFFER_ENABLE_DISABLE_IRQ */
 
-
 /* ========================== 平台适配：RTOS 互斥锁 ========================= */
 
 #if RING_BUFFER_ENABLE_MUTEX
 
-/* FreeRTOS */
-#define RTOS_FREERTOS
+/* 选择 RTOS 类型 */
+// #define RTOS_FREERTOS
+// #define RTOS_RTTHREAD
 
 #ifdef RTOS_FREERTOS
     #include "FreeRTOS.h"
@@ -108,8 +108,19 @@ extern "C" {
     #define MUTEX_DELETE(m)         vSemaphoreDelete(m)
     #define MUTEX_IS_VALID(m)       ((m) != NULL)
 
+#elif defined(RTOS_RTTHREAD)
+    #include "rtthread.h"
+    
+    typedef rt_mutex_t mutex_t;
+    
+    #define MUTEX_CREATE()          rt_mutex_create("rb_mtx", RT_IPC_FLAG_PRIO)
+    #define MUTEX_LOCK(m)           rt_mutex_take((m), RT_WAITING_FOREVER)
+    #define MUTEX_UNLOCK(m)         rt_mutex_release(m)
+    #define MUTEX_DELETE(m)         rt_mutex_delete(m)
+    #define MUTEX_IS_VALID(m)       ((m) != RT_NULL)
+
 #else
-    #error "未选择 RTOS，请定义 RTOS_xxx 宏"
+    #error "未选择 RTOS，请定义 RTOS_FREERTOS 或 RTOS_RTTHREAD 宏"
 #endif
 
 #endif /* RING_BUFFER_ENABLE_MUTEX */
@@ -117,11 +128,27 @@ extern "C" {
 /* ================================ 调试选项 ================================ */
 
 //#define RING_BUFFER_DEBUG
+
 #ifdef RING_BUFFER_DEBUG
     #include <stdio.h>
-    #define RB_LOG(fmt, ...) printf("[RingBuf] " fmt "\n", ##__VA_ARGS__)
+    
+    /* 错误级别：详细信息（文件名、行号、函数名） */
+    #define RB_LOG_ERROR(fmt, ...) \
+        printf("[RingBuf ERROR][%s:%d %s()] " fmt "\r\n", \
+               __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
+    
+    /* 警告级别：包含函数名 */
+    #define RB_LOG_WARN(fmt, ...) \
+        printf("[RingBuf WARN][%s()] " fmt "\r\n", \
+               __FUNCTION__, ##__VA_ARGS__)
+    
+    /* 信息级别：简洁输出 */
+    #define RB_LOG_INFO(fmt, ...) \
+        printf("[RingBuf INFO] " fmt "\r\n", ##__VA_ARGS__)
 #else
-    #define RB_LOG(fmt, ...) ((void)0)
+    #define RB_LOG_ERROR(fmt, ...) ((void)0)
+    #define RB_LOG_WARN(fmt, ...)  ((void)0)
+    #define RB_LOG_INFO(fmt, ...)  ((void)0)
 #endif
 
 #ifdef __cplusplus

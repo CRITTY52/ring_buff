@@ -332,7 +332,6 @@ ring_buffer_create(&rb, buf, 256, RING_BUFFER_TYPE_CUSTOM_DEBUG);
 | **原型**     | `bool ring_buffer_create(ring_buffer_t *rb, uint8_t *buffer, uint16_t size, ring_buffer_type_t type)` |
 | **参数**     | `rb` - 缓冲区控制结构指针（用户分配）<br>`buffer` - 数据存储空间指针（用户分配）<br>`size` - 缓冲区大小（字节，≥ 2）<br>`type` - 线程安全策略类型 |
 | **返回值**   | `true` - 创建成功<br>`false` - 失败（参数错误、策略未启用或互斥锁创建失败） |
-| **性能**     | ~30ns（STM32F407 @ 168MHz，-O2 优化）                        |
 | **注意事项** | • 实际可用容量 = size - 1<br>• 完全静态分配，无堆依赖<br>• 互斥锁模式可能因 RTOS 资源不足而失败<br>• 参数检查始终启用 |
 
 **示例**：
@@ -344,7 +343,8 @@ static ring_buffer_t uart_rb;
 
 // 创建缓冲区
 if (!ring_buffer_create(&uart_rb, uart_buf, 256, 
-                        RING_BUFFER_TYPE_LOCKFREE)) {
+                        RING_BUFFER_TYPE_LOCKFREE)) 
+{
     // 创建失败处理
     Error_Handler();
 }
@@ -362,7 +362,6 @@ if (!ring_buffer_create(&uart_rb, uart_buf, 256,
 | **原型**     | `void ring_buffer_destroy(ring_buffer_t *rb)`                |
 | **参数**     | `rb` - 缓冲区指针                                            |
 | **返回值**   | 无                                                           |
-| **性能**     | ~20ns（STM32F407 @ 168MHz，-O2 优化）                        |
 | **注意事项** | • 互斥锁模式会删除互斥锁<br>• 不会释放 buffer 内存（由用户管理）<br>• 销毁后 rb 被清零，可安全重新初始化<br>• NULL 指针安全（不会崩溃） |
 
 **示例**：
@@ -372,8 +371,7 @@ if (!ring_buffer_create(&uart_rb, uart_buf, 256,
 ring_buffer_destroy(&uart_rb);
 
 // 可以重新创建
-ring_buffer_create(&uart_rb, uart_buf, 256, 
-                   RING_BUFFER_TYPE_LOCKFREE);
+ring_buffer_create(&uart_rb, uart_buf, 256, RING_BUFFER_TYPE_LOCKFREE);
 ```
 
 ------
@@ -390,14 +388,14 @@ ring_buffer_create(&uart_rb, uart_buf, 256,
 | **原型**     | `bool ring_buffer_write(ring_buffer_t *rb, uint8_t data)`    |
 | **参数**     | `rb` - 缓冲区指针<br>`data` - 待写入的字节                   |
 | **返回值**   | `true` - 写入成功<br>`false` - 失败（缓冲区满、参数错误或未初始化） |
-| **性能**     | 无锁模式：~20ns<br>关中断模式：~80ns<br>互斥锁模式：~800ns<br>（STM32F407 @ 168MHz，-O2 优化） |
 | **注意事项** | • 非阻塞，满时立即返回<br>• 适合高频单字节场景（如 ISR）<br>• 批量写入优先使用 `write_multi()` |
 
 **示例**：
 
 ```c
 // ISR 中使用
-void UART_IRQHandler(void) {
+void UART_IRQHandler(void) 
+{
     uint8_t byte = UART->DR;
     ring_buffer_write(&uart_rb, byte);
 }
@@ -413,14 +411,14 @@ void UART_IRQHandler(void) {
 | **原型**     | `bool ring_buffer_read(ring_buffer_t *rb, uint8_t *data)`    |
 | **参数**     | `rb` - 缓冲区指针<br>`data` - 读取数据存放地址               |
 | **返回值**   | `true` - 读取成功，`*data` 包含有效数据<br>`false` - 失败（缓冲区空、参数错误或未初始化） |
-| **性能**     | 无锁模式：~15ns<br>关中断模式：~75ns<br>互斥锁模式：~850ns<br>（STM32F407 @ 168MHz，-O2 优化） |
 | **注意事项** | • 非阻塞，空时立即返回<br>• 失败时 `*data` 内容未定义<br>• 批量读取优先使用 `read_multi()` |
 
 **示例**：
 
 ```c
 uint8_t byte;
-if (ring_buffer_read(&uart_rb, &byte)) {
+if (ring_buffer_read(&uart_rb, &byte)) 
+{
     process_byte(byte);
 }
 ```
@@ -435,7 +433,6 @@ if (ring_buffer_read(&uart_rb, &byte)) {
 | **原型**     | `uint16_t ring_buffer_write_multi(ring_buffer_t *rb, const uint8_t *data, uint16_t len)` |
 | **参数**     | `rb` - 缓冲区指针<br>`data` - 待写入的数据指针<br>`len` - 待写入的字节数 |
 | **返回值**   | 实际写入的字节数（0 ~ len）<br>• `0` - 缓冲区满或参数错误<br>• `< len` - 部分写入（空间不足）<br>• `== len` - 全部写入成功 |
-| **性能**     | 无锁模式：~1.2μs / 64B<br>关中断模式：~2.5μs / 64B<br>互斥锁模式：~15μs / 64B<br>（STM32F407 @ 168MHz，-O2 优化） |
 | **注意事项** | • 允许部分写入，返回实际字节数<br>• 若需原子性，先检查 `free_space()`<br>• `len=0` 或 `data=NULL` 返回 0 |
 
 **示例**：
@@ -444,13 +441,15 @@ if (ring_buffer_read(&uart_rb, &byte)) {
 // 方案1：允许部分写入
 uint8_t data[100];
 uint16_t written = ring_buffer_write_multi(&rb, data, 100);
-if (written < 100) {
+if (written < 100)
+{
     // 处理剩余数据
     handle_remaining(&data[written], 100 - written);
 }
 
 // 方案2：原子性写入（全部成功或全部失败）
-if (ring_buffer_free_space(&rb) >= 100) {
+if (ring_buffer_free_space(&rb) >= 100)
+{
     uint16_t written = ring_buffer_write_multi(&rb, data, 100);
     assert(written == 100);  // 保证全部写入
 }
@@ -466,7 +465,6 @@ if (ring_buffer_free_space(&rb) >= 100) {
 | **原型**     | `uint16_t ring_buffer_read_multi(ring_buffer_t *rb, uint8_t *data, uint16_t len)` |
 | **参数**     | `rb` - 缓冲区指针<br>`data` - 读取数据存放地址<br>`len` - 期望读取的字节数 |
 | **返回值**   | 实际读取的字节数（0 ~ len）<br>• `0` - 缓冲区空或参数错误<br>• `< len` - 部分读取（数据不足）<br>• `== len` - 全部读取成功 |
-| **性能**     | 无锁模式：~1.0μs / 64B<br>关中断模式：~2.3μs / 64B<br>互斥锁模式：~14μs / 64B<br>（STM32F407 @ 168MHz，-O2 优化） |
 | **注意事项** | • 返回值 < len 表示数据不足<br>• `len=0` 或 `data=NULL` 返回 0<br>• 读取后数据从缓冲区移除 |
 
 **示例**：
@@ -474,7 +472,8 @@ if (ring_buffer_free_space(&rb) >= 100) {
 ```c
 uint8_t buffer[64];
 uint16_t len = ring_buffer_read_multi(&rb, buffer, 64);
-if (len > 0) {
+if (len > 0) 
+{
     process_data(buffer, len);
 }
 ```
@@ -497,13 +496,16 @@ if (len > 0) {
 **示例**：
 
 ```c
-if (ring_buffer_available(&rb) >= 10) {
+if (ring_buffer_available(&rb) >= 10)
+{
     uint8_t buf[10];
     ring_buffer_read_multi(&rb, buf, 10);
 }
 ```
 
 ------
+
+
 
 ### 3.2 ring_buffer_free_space()
 
@@ -513,14 +515,14 @@ if (ring_buffer_available(&rb) >= 10) {
 | **原型**     | `uint16_t ring_buffer_free_space(const ring_buffer_t *rb)`   |
 | **参数**     | `rb` - 缓冲区指针                                            |
 | **返回值**   | 剩余可写字节数（0 ~ size-1）<br>参数错误返回 0               |
-| **性能**     | 无锁模式：~10ns<br>关中断模式：~50ns<br>互斥锁模式：~500ns<br>（STM32F407 @ 168MHz，-O2 优化） |
 | **注意事项** | • 用于原子性写入前的空间检查<br>• `free_space() + available() == size - 1` |
 
 **示例**：
 
 ```c
 // 原子性写入
-if (ring_buffer_free_space(&rb) >= 100) {
+if (ring_buffer_free_space(&rb) >= 100)
+{
     ring_buffer_write_multi(&rb, data, 100);
 }
 ```

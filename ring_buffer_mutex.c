@@ -1,9 +1,9 @@
 /**
  * @file    ring_buffer_mutex.c
- * @brief   环形缓冲区互斥锁实现
+ * @brief   环形缓冲区互斥锁实现（增强版）
  * @author  CRITTY.熙影
  * @date    2024-12-27
- * @version 2.1
+ * @version 2.2
  * 
  * @details
  * 适用场景：
@@ -16,6 +16,10 @@
  * - 支持优先级继承（防止优先级反转）
  * 
  * @warning 不可在 ISR 中使用
+ * 
+ * @note 版本 2.2 改进:
+ *       - 在加锁前增加参数校验(关键修复!)
+ *       - 增强日志系统
  */
 
 #include "ring_buffer.h"
@@ -31,31 +35,60 @@ extern const struct ring_buffer_ops ring_buffer_lockfree_ops;
 
 bool ring_buffer_mutex_init(ring_buffer_t *rb)
 {
-    if (!rb) return false;
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return false;
+    }
     
     mutex_t mutex = MUTEX_CREATE();
     if (!MUTEX_IS_VALID(mutex)) {
+        RB_LOG_ERROR("Mutex create failed (rb=%p)", rb);
         return false;
     }
     
     rb->lock = (void*)mutex;
+    RB_LOG_INFO("Mutex created successfully");
     return true;
 }
 
 void ring_buffer_mutex_deinit(ring_buffer_t *rb)
 {
-    if (!rb || !rb->lock) return;
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return;
+    }
+    
+    if (!rb->lock) {
+        RB_LOG_WARN("lock is NULL (rb=%p), nothing to delete", rb);
+        return;
+    }
     
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_DELETE(mutex);
     rb->lock = NULL;
+    
+    RB_LOG_INFO("Mutex deleted");
 }
 
 /* Exported functions (Implementation) ---------------------------------------*/
 
 static bool mutex_write(ring_buffer_t *rb, uint8_t data)
 {
-    if (!rb || !rb->lock) return false;
+    /* 关键修复: 必须在加锁前进行参数校验! */
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return false;
+    }
+    
+    if (!rb->lock) {
+        RB_LOG_ERROR("lock is NULL (rb=%p)", rb);
+        return false;
+    }
+    
+    if (!rb->buffer) {
+        RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
+        return false;
+    }
     
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_LOCK(mutex);
@@ -68,7 +101,26 @@ static bool mutex_write(ring_buffer_t *rb, uint8_t data)
 
 static bool mutex_read(ring_buffer_t *rb, uint8_t *data)
 {
-    if (!rb || !data || !rb->lock) return false;
+    /* 关键修复: 必须在加锁前进行参数校验! */
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return false;
+    }
+    
+    if (!data) {
+        RB_LOG_ERROR("data is NULL (rb=%p)", rb);
+        return false;
+    }
+    
+    if (!rb->lock) {
+        RB_LOG_ERROR("lock is NULL (rb=%p)", rb);
+        return false;
+    }
+    
+    if (!rb->buffer) {
+        RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
+        return false;
+    }
     
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_LOCK(mutex);
@@ -81,7 +133,31 @@ static bool mutex_read(ring_buffer_t *rb, uint8_t *data)
 
 static uint16_t mutex_write_multi(ring_buffer_t *rb, const uint8_t *data, uint16_t len)
 {
-    if (!rb || !data || len == 0 || !rb->lock) return 0;
+    /* 关键修复: 必须在加锁前进行参数校验! */
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return 0;
+    }
+    
+    if (!data) {
+        RB_LOG_ERROR("data is NULL (rb=%p, len=%u)", rb, len);
+        return 0;
+    }
+    
+    if (len == 0) {
+        RB_LOG_WARN("len is 0");
+        return 0;
+    }
+    
+    if (!rb->lock) {
+        RB_LOG_ERROR("lock is NULL (rb=%p)", rb);
+        return 0;
+    }
+    
+    if (!rb->buffer) {
+        RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
+        return 0;
+    }
     
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_LOCK(mutex);
@@ -94,7 +170,31 @@ static uint16_t mutex_write_multi(ring_buffer_t *rb, const uint8_t *data, uint16
 
 static uint16_t mutex_read_multi(ring_buffer_t *rb, uint8_t *data, uint16_t len)
 {
-    if (!rb || !data || len == 0 || !rb->lock) return 0;
+    /* 关键修复: 必须在加锁前进行参数校验! */
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return 0;
+    }
+    
+    if (!data) {
+        RB_LOG_ERROR("data is NULL (rb=%p, len=%u)", rb, len);
+        return 0;
+    }
+    
+    if (len == 0) {
+        RB_LOG_WARN("len is 0");
+        return 0;
+    }
+    
+    if (!rb->lock) {
+        RB_LOG_ERROR("lock is NULL (rb=%p)", rb);
+        return 0;
+    }
+    
+    if (!rb->buffer) {
+        RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
+        return 0;
+    }
     
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_LOCK(mutex);
@@ -107,7 +207,16 @@ static uint16_t mutex_read_multi(ring_buffer_t *rb, uint8_t *data, uint16_t len)
 
 static uint16_t mutex_available(const ring_buffer_t *rb)
 {
-    if (!rb || !rb->lock) return 0;
+    /* 关键修复: 必须在加锁前进行参数校验! */
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return 0;
+    }
+    
+    if (!rb->lock) {
+        RB_LOG_ERROR("lock is NULL (rb=%p)", rb);
+        return 0;
+    }
     
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_LOCK(mutex);
@@ -120,7 +229,16 @@ static uint16_t mutex_available(const ring_buffer_t *rb)
 
 static uint16_t mutex_free_space(const ring_buffer_t *rb)
 {
-    if (!rb || !rb->lock) return 0;
+    /* 关键修复: 必须在加锁前进行参数校验! */
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return 0;
+    }
+    
+    if (!rb->lock) {
+        RB_LOG_ERROR("lock is NULL (rb=%p)", rb);
+        return 0;
+    }
     
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_LOCK(mutex);
@@ -133,7 +251,16 @@ static uint16_t mutex_free_space(const ring_buffer_t *rb)
 
 static bool mutex_is_empty(const ring_buffer_t *rb)
 {
-    if (!rb || !rb->lock) return true;
+    /* 关键修复: 必须在加锁前进行参数校验! */
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return true;
+    }
+    
+    if (!rb->lock) {
+        RB_LOG_ERROR("lock is NULL (rb=%p)", rb);
+        return true;
+    }
     
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_LOCK(mutex);
@@ -146,7 +273,16 @@ static bool mutex_is_empty(const ring_buffer_t *rb)
 
 static bool mutex_is_full(const ring_buffer_t *rb)
 {
-    if (!rb || !rb->lock) return false;
+    /* 关键修复: 必须在加锁前进行参数校验! */
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return false;
+    }
+    
+    if (!rb->lock) {
+        RB_LOG_ERROR("lock is NULL (rb=%p)", rb);
+        return false;
+    }
     
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_LOCK(mutex);
@@ -159,7 +295,16 @@ static bool mutex_is_full(const ring_buffer_t *rb)
 
 static void mutex_clear(ring_buffer_t *rb)
 {
-    if (!rb || !rb->lock) return;
+    /* 关键修复: 必须在加锁前进行参数校验! */
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return;
+    }
+    
+    if (!rb->lock) {
+        RB_LOG_ERROR("lock is NULL (rb=%p)", rb);
+        return;
+    }
     
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_LOCK(mutex);
@@ -167,6 +312,8 @@ static void mutex_clear(ring_buffer_t *rb)
     ring_buffer_lockfree_ops.clear(rb);
     
     MUTEX_UNLOCK(mutex);
+    
+    RB_LOG_INFO("Mutex buffer cleared");
 }
 
 /* Exported constant ---------------------------------------------------------*/

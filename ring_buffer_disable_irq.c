@@ -1,9 +1,9 @@
 /**
  * @file    ring_buffer_disable_irq.c
- * @brief   环形缓冲区关中断实现
+ * @brief   环形缓冲区关中断实现（增强版）
  * @author  CRITTY.熙影
  * @date    2024-12-27
- * @version 2.1
+ * @version 2.2
  * 
  * @details
  * 适用场景：
@@ -18,6 +18,10 @@
  * @warning
  * - 会增加中断延迟
  * - 不适用于多核系统
+ * 
+ * @note 版本 2.2 改进:
+ *       - 在关中断前增加参数校验(关键修复!)
+ *       - 增强日志系统
  */
 
 #include "ring_buffer.h"
@@ -33,6 +37,17 @@ extern const struct ring_buffer_ops ring_buffer_lockfree_ops;
 
 static bool disable_irq_write(ring_buffer_t *rb, uint8_t data)
 {
+    /* 关键修复: 必须在关中断前进行参数校验! */
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return false;
+    }
+    
+    if (!rb->buffer) {
+        RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
+        return false;
+    }
+    
     irq_state_t state;
     IRQ_SAVE(state);
     
@@ -44,6 +59,22 @@ static bool disable_irq_write(ring_buffer_t *rb, uint8_t data)
 
 static bool disable_irq_read(ring_buffer_t *rb, uint8_t *data)
 {
+    /* 关键修复: 必须在关中断前进行参数校验! */
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return false;
+    }
+    
+    if (!rb->buffer) {
+        RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
+        return false;
+    }
+    
+    if (!data) {
+        RB_LOG_ERROR("data is NULL (rb=%p)", rb);
+        return false;
+    }
+    
     irq_state_t state;
     IRQ_SAVE(state);
     
@@ -55,6 +86,27 @@ static bool disable_irq_read(ring_buffer_t *rb, uint8_t *data)
 
 static uint16_t disable_irq_write_multi(ring_buffer_t *rb, const uint8_t *data, uint16_t len)
 {
+    /* 关键修复: 必须在关中断前进行参数校验! */
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return 0;
+    }
+    
+    if (!rb->buffer) {
+        RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
+        return 0;
+    }
+    
+    if (!data) {
+        RB_LOG_ERROR("data is NULL (rb=%p, len=%u)", rb, len);
+        return 0;
+    }
+    
+    if (len == 0) {
+        RB_LOG_WARN("len is 0");
+        return 0;
+    }
+    
     irq_state_t state;
     IRQ_SAVE(state);
     
@@ -66,6 +118,27 @@ static uint16_t disable_irq_write_multi(ring_buffer_t *rb, const uint8_t *data, 
 
 static uint16_t disable_irq_read_multi(ring_buffer_t *rb, uint8_t *data, uint16_t len)
 {
+    /* 关键修复: 必须在关中断前进行参数校验! */
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return 0;
+    }
+    
+    if (!rb->buffer) {
+        RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
+        return 0;
+    }
+    
+    if (!data) {
+        RB_LOG_ERROR("data is NULL (rb=%p, len=%u)", rb, len);
+        return 0;
+    }
+    
+    if (len == 0) {
+        RB_LOG_WARN("len is 0");
+        return 0;
+    }
+    
     irq_state_t state;
     IRQ_SAVE(state);
     
@@ -77,6 +150,12 @@ static uint16_t disable_irq_read_multi(ring_buffer_t *rb, uint8_t *data, uint16_
 
 static uint16_t disable_irq_available(const ring_buffer_t *rb)
 {
+    /* 关键修复: 必须在关中断前进行参数校验! */
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return 0;
+    }
+    
     irq_state_t state;
     IRQ_SAVE(state);
     
@@ -88,6 +167,12 @@ static uint16_t disable_irq_available(const ring_buffer_t *rb)
 
 static uint16_t disable_irq_free_space(const ring_buffer_t *rb)
 {
+    /* 关键修复: 必须在关中断前进行参数校验! */
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return 0;
+    }
+    
     irq_state_t state;
     IRQ_SAVE(state);
     
@@ -99,6 +184,12 @@ static uint16_t disable_irq_free_space(const ring_buffer_t *rb)
 
 static bool disable_irq_is_empty(const ring_buffer_t *rb)
 {
+    /* 关键修复: 必须在关中断前进行参数校验! */
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return true;
+    }
+    
     irq_state_t state;
     IRQ_SAVE(state);
     
@@ -110,6 +201,12 @@ static bool disable_irq_is_empty(const ring_buffer_t *rb)
 
 static bool disable_irq_is_full(const ring_buffer_t *rb)
 {
+    /* 关键修复: 必须在关中断前进行参数校验! */
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return false;
+    }
+    
     irq_state_t state;
     IRQ_SAVE(state);
     
@@ -121,12 +218,20 @@ static bool disable_irq_is_full(const ring_buffer_t *rb)
 
 static void disable_irq_clear(ring_buffer_t *rb)
 {
+    /* 关键修复: 必须在关中断前进行参数校验! */
+    if (!rb) {
+        RB_LOG_ERROR("rb is NULL");
+        return;
+    }
+    
     irq_state_t state;
     IRQ_SAVE(state);
     
     ring_buffer_lockfree_ops.clear(rb);
     
     IRQ_RESTORE(state);
+    
+    RB_LOG_INFO("Disable_irq buffer cleared");
 }
 
 /* Exported constant ---------------------------------------------------------*/
