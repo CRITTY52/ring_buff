@@ -59,10 +59,10 @@ extern "C" {
 
 /* ================================= 版本信息 ================================== */
 
-#define RING_BUFFER_VERSION_MAJOR    2        /**< 主版本号：不兼容的API修改 */
-#define RING_BUFFER_VERSION_MINOR    1        /**< 次版本号：向下兼容的功能新增 */
+#define RING_BUFFER_VERSION_MAJOR    3        /**< 主版本号：不兼容的API修改 */
+#define RING_BUFFER_VERSION_MINOR    0        /**< 次版本号：向下兼容的功能新增 */
 #define RING_BUFFER_VERSION_PATCH    0        /**< 修订号：向下兼容的问题修正 */
-#define RING_BUFFER_VERSION_STRING   "2.1.0"  /**< 版本字符串 */
+#define RING_BUFFER_VERSION_STRING   "3.0.0"  /**< 版本字符串 */
 	  
 	  
 /* =============================== 功能启用开关 ================================ */
@@ -78,7 +78,8 @@ extern "C" {
  * @brief 启用统计功能
  * RAM 开销：每个缓冲区 +12 字节
  */
-#define RING_BUFFER_ENABLE_STATISTICS  1
+#define RING_BUFFER_ENABLE_STATISTICS  0
+
 
 /* =============================== 性能调优参数 =============================== */
 
@@ -86,11 +87,11 @@ extern "C" {
  * @brief 最小缓冲区大小（字节）
  */
 #define RING_BUFFER_MIN_SIZE  2
-
 /**
  * @brief 最大自定义策略数量
  */
 #define RING_BUFFER_MAX_CUSTOM_OPS  4
+
 
 /* ================================ 编译时检查 ================================ */
 

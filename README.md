@@ -17,7 +17,8 @@ ring_buffer/
 ├── ring_buffer_lockfree.c        # 🔓 无锁策略实现
 ├── ring_buffer_disable_irq.c     # 🚫 关中断策略实现
 ├── ring_buffer_mutex.c           # 🔒 互斥锁策略实现
-├── ring_buffer_test.c            # 🧪 单元测试
+├── ring_buffer_test.h            # 🧪 单元测试接口
+├── ring_buffer_test.c            # 🧪 单元测试实现
 └── README.md                     # 📝 本文档
 ```
 

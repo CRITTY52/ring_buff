@@ -117,7 +117,7 @@ void ring_buffer_destroy(ring_buffer_t *rb);
  *  - 注册后策略永久有效
  *  - 最多支持 RING_BUFFER_MAX_CUSTOM_OPS 个自定义策略
  *  - 必须在任何使用该策略的 ring_buffer_create() 调用前注册
- *  - ⚠️ 不支持运行时注销，如需更换策略请重启系统
+ *  - 不支持运行时注销，如需更换策略请重启系统
  * @warning 
  *  - 重复注册相同 type 会失败
  *  - ops 指针必须指向静态/全局数据，不可指向栈变量
