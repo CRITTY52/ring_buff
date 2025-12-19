@@ -2,8 +2,8 @@
  * @file    ring_buffer_config.h
  * @brief   环形缓冲区配置文件
  * @author  CRITTY.熙影
- * @date    2024-12-27
- * @version V3.0.0 
+ * @date    2024-12-30
+ * @version V3.0.1 
  * @attention
  * <h2><center>&copy; Copyright (c) 2024 CRITTY.</center></h2>
  * All rights reserved.
@@ -15,6 +15,10 @@
    版本历史 (Version History)
    ===============================================================================
    
+   V3.0.1 / 2024-12-30
+   -------------------
+   [优化] * 增加宏开关 RING_BUFFER_PARANOID_CHECK
+
    V3.0.0 / 2024-12-27
    -------------------
    [重构] * 采用工厂策略模式(无锁、关中断、互斥锁)
@@ -61,8 +65,8 @@ extern "C" {
 
 #define RING_BUFFER_VERSION_MAJOR    3        /**< 主版本号：不兼容的API修改 */
 #define RING_BUFFER_VERSION_MINOR    0        /**< 次版本号：向下兼容的功能新增 */
-#define RING_BUFFER_VERSION_PATCH    0        /**< 修订号：向下兼容的问题修正 */
-#define RING_BUFFER_VERSION_STRING   "3.0.0"  /**< 版本字符串 */
+#define RING_BUFFER_VERSION_PATCH    1        /**< 修订号：向下兼容的问题修正 */
+#define RING_BUFFER_VERSION_STRING   "3.0.1"  /**< 版本字符串 */
 	  
 	  
 /* =============================== 功能启用开关 ================================ */
@@ -80,6 +84,11 @@ extern "C" {
  */
 #define RING_BUFFER_ENABLE_STATISTICS  0
 
+/**
+ * @brief 双重检查
+ * 开发/调试阶段: 全面检查，生产环境 (PARANOID_CHECK=0): 移除检查,信任上层
+ */
+#define RING_BUFFER_PARANOID_CHECK  1  
 
 /* =============================== 性能调优参数 =============================== */
 

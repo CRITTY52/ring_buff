@@ -2,7 +2,7 @@
  * @file    ring_buffer_disable_irq.c
  * @brief   环形缓冲区关中断实现
  * @author  CRITTY.熙影
- * @date    2024-12-27
+ * @date    2024-12-30
  * @details
  * 适用场景：
  *  - 裸机系统（无 RTOS）
@@ -29,18 +29,18 @@ extern const ring_buffer_ops_t ring_buffer_lockfree_ops;
 
 static bool disable_irq_write(ring_buffer_t *rb, uint8_t data)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return false;
     }
-    
     if (!rb->buffer) 
 	{
         RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
         return false;
     }
-    
+#endif    
     irq_state_t state;
     IRQ_SAVE(state);
     
@@ -52,24 +52,23 @@ static bool disable_irq_write(ring_buffer_t *rb, uint8_t data)
 
 static bool disable_irq_read(ring_buffer_t *rb, uint8_t *data)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return false;
     }
-    
     if (!rb->buffer) 
 	{
         RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
         return false;
     }
-    
     if (!data) 
 	{
         RB_LOG_ERROR("data is NULL (rb=%p)", rb);
         return false;
     }
-    
+#endif    
     irq_state_t state;
     IRQ_SAVE(state);
     
@@ -81,30 +80,28 @@ static bool disable_irq_read(ring_buffer_t *rb, uint8_t *data)
 
 static uint16_t disable_irq_write_multi(ring_buffer_t *rb, const uint8_t *data, uint16_t len)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return 0;
     }
-    
     if (!rb->buffer) 
 	{
         RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
         return 0;
     }
-    
     if (!data) 
 	{
         RB_LOG_ERROR("data is NULL (rb=%p, len=%u)", rb, len);
         return 0;
     }
-    
     if (len == 0) 
 	{
         RB_LOG_WARN("len is 0");
         return 0;
     }
-    
+#endif    
     irq_state_t state;
     IRQ_SAVE(state);
     
@@ -116,30 +113,28 @@ static uint16_t disable_irq_write_multi(ring_buffer_t *rb, const uint8_t *data, 
 
 static uint16_t disable_irq_read_multi(ring_buffer_t *rb, uint8_t *data, uint16_t len)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return 0;
     }
-    
     if (!rb->buffer) 
 	{
         RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
         return 0;
     }
-    
     if (!data) 
 	{
         RB_LOG_ERROR("data is NULL (rb=%p, len=%u)", rb, len);
         return 0;
     }
-    
     if (len == 0) 
 	{
         RB_LOG_WARN("len is 0");
         return 0;
     }
-    
+#endif    
     irq_state_t state;
     IRQ_SAVE(state);
     
@@ -151,12 +146,13 @@ static uint16_t disable_irq_read_multi(ring_buffer_t *rb, uint8_t *data, uint16_
 
 static uint16_t disable_irq_available(const ring_buffer_t *rb)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return 0;
     }
-    
+#endif    
     irq_state_t state;
     IRQ_SAVE(state);
     
@@ -168,12 +164,13 @@ static uint16_t disable_irq_available(const ring_buffer_t *rb)
 
 static uint16_t disable_irq_free_space(const ring_buffer_t *rb)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return 0;
     }
-    
+#endif   
     irq_state_t state;
     IRQ_SAVE(state);
     
@@ -185,12 +182,13 @@ static uint16_t disable_irq_free_space(const ring_buffer_t *rb)
 
 static bool disable_irq_is_empty(const ring_buffer_t *rb)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return true;
     }
-    
+#endif
     irq_state_t state;
     IRQ_SAVE(state);
     
@@ -202,12 +200,13 @@ static bool disable_irq_is_empty(const ring_buffer_t *rb)
 
 static bool disable_irq_is_full(const ring_buffer_t *rb)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return false;
     }
-    
+#endif
     irq_state_t state;
     IRQ_SAVE(state);
     
@@ -219,12 +218,13 @@ static bool disable_irq_is_full(const ring_buffer_t *rb)
 
 static void disable_irq_clear(ring_buffer_t *rb)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return;
     }
-    
+#endif
     irq_state_t state;
     IRQ_SAVE(state);
     

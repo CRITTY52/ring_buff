@@ -2,7 +2,7 @@
  * @file    ring_buffer_lockfree.c
  * @brief   环形缓冲区无锁实现
  * @author  CRITTY.熙影
- * @date    2024-12-27
+ * @date    2024-12-30
  * @details
  * 适用场景：
  *  - 单生产者单消费者（SPSC）
@@ -49,18 +49,21 @@ static inline uint16_t lockfree_free_space_internal(const ring_buffer_t *rb)
 
 static bool lockfree_write(ring_buffer_t *rb, uint8_t data)
 {
+#if RING_BUFFER_PARANOID_CHECK	
+	/* 开发/调试阶段: 全面检查 */
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return false;
     }
-    
     if (!rb->buffer) 
 	{
         RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
         return false;
     }
+#endif	
     
+	/* 生产环境 (PARANOID_CHECK=0): 移除检查,信任上层 */
     uint16_t next_head = (rb->head + 1) % rb->size;
     
     /* 检查是否已满 */
@@ -86,31 +89,29 @@ static bool lockfree_write(ring_buffer_t *rb, uint8_t data)
 
 static bool lockfree_read(ring_buffer_t *rb, uint8_t *data)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return false;
     }
-    
     if (!rb->buffer) 
 	{
         RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
         return false;
     }
-    
     if (!data) 
 	{
         RB_LOG_ERROR("data is NULL (rb=%p)", rb);
         return false;
     }
-    
+#endif  
     /* 检查是否为空 */
     if (rb->tail == rb->head) 
 	{
 		RB_LOG_WARN("rb is empty");
         return false;
     }
-    
     /* 读取数据 */
     *data = rb->buffer[rb->tail];
     rb->tail = (rb->tail + 1) % rb->size;
@@ -124,30 +125,29 @@ static bool lockfree_read(ring_buffer_t *rb, uint8_t *data)
 
 static uint16_t lockfree_write_multi(ring_buffer_t *rb, const uint8_t *data, uint16_t len)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return 0;
     }
-    
     if (!rb->buffer)		
 	{
         RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
         return 0;
     }
-    
     if (!data) 
 	{
         RB_LOG_ERROR("data is NULL (rb=%p, len=%u)", rb, len);
         return 0;
     }
-    
     if (len == 0) 
 	{
         RB_LOG_WARN("len is 0");
         return 0;
     }
-    
+#endif      
+
     /* 计算可写入数量 */
     uint16_t free = lockfree_free_space_internal(rb);
     uint16_t to_write = (len > free) ? free : len;
@@ -203,30 +203,29 @@ static uint16_t lockfree_write_multi(ring_buffer_t *rb, const uint8_t *data, uin
 
 static uint16_t lockfree_read_multi(ring_buffer_t *rb, uint8_t *data, uint16_t len)
 {
+#if RING_BUFFER_PARANOID_CHECK		
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return 0;
     }
-    
     if (!rb->buffer) 
 	{
         RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
         return 0;
     }
-    
     if (!data) 
 	{
         RB_LOG_ERROR("data is NULL (rb=%p, len=%u)", rb, len);
         return 0;
     }
-    
     if (len == 0) 
 	{
         RB_LOG_WARN("len is 0");
         return 0;
     }
-    
+#endif
+
     /* 计算可读取数量 */
     uint16_t available = lockfree_available_internal(rb);
     uint16_t to_read = (len > available) ? available : len;
@@ -275,56 +274,61 @@ static uint16_t lockfree_read_multi(ring_buffer_t *rb, uint8_t *data, uint16_t l
 
 static uint16_t lockfree_available(const ring_buffer_t *rb)
 {
+#if RING_BUFFER_PARANOID_CHECK		
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return 0;
     }
-    
+#endif    
     return lockfree_available_internal(rb);
 }
 
 static uint16_t lockfree_free_space(const ring_buffer_t *rb)
 {
+#if RING_BUFFER_PARANOID_CHECK		
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return 0;
     }
-    
+#endif    
     return lockfree_free_space_internal(rb);
 }
 
 static bool lockfree_is_empty(const ring_buffer_t *rb)
 {
+#if RING_BUFFER_PARANOID_CHECK		
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return true;  /* 返回 true 防止误操作 */
     }
-    
+#endif    
     return (rb->head == rb->tail);
 }
 
 static bool lockfree_is_full(const ring_buffer_t *rb)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return false;  /* 返回 false 防止误判 */
     }
-    
+#endif    
     return ((rb->head + 1) % rb->size == rb->tail);
 }
 
 static void lockfree_clear(ring_buffer_t *rb)
 {
+#if RING_BUFFER_PARANOID_CHECK		
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return;
     }
-    
+#endif    
     rb->tail = rb->head;
     
 #if RING_BUFFER_ENABLE_STATISTICS

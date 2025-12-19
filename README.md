@@ -952,6 +952,10 @@ ring_buffer_create(&rb, buf, 256, MY_STRATEGY);
 
 
 
+   V3.0.1 / 2024-12-30
+   -------------------
+   [优化] * 增加宏开关 RING_BUFFER_PARANOID_CHECK
+
    V3.0.0 / 2024-12-27
    -------------------
    [重构] * 采用工厂策略模式(无锁、关中断、互斥锁)
@@ -995,7 +999,7 @@ MIT License - 详见 [LICENSE](https://claude.ai/chat/LICENSE)
 
 - 📧 Email: meihaoeverything@gmail.com
 - 🌐 GitHub: 
-- 📅 Last Update: 2024-12-27
+- 📅 Last Update: 2024-12-30
 
 ------
 

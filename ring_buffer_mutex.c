@@ -2,7 +2,7 @@
  * @file    ring_buffer_mutex.c
  * @brief   环形缓冲区互斥锁实现
  * @author  CRITTY.熙影
- * @date    2024-12-27
+ * @date    2024-12-30
  * @details
  * 适用场景：
  *  - FreeRTOS / RT-Thread / μC/OS 等 RTOS 环境
@@ -27,12 +27,13 @@ extern const ring_buffer_ops_t ring_buffer_lockfree_ops;
 
 bool ring_buffer_mutex_init(ring_buffer_t *rb)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return false;
     }
-    
+#endif
     mutex_t mutex = MUTEX_CREATE();
     if (!MUTEX_IS_VALID(mutex)) 
 	{
@@ -48,18 +49,18 @@ bool ring_buffer_mutex_init(ring_buffer_t *rb)
 
 void ring_buffer_mutex_deinit(ring_buffer_t *rb)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return;
     }
-    
     if (!rb->lock) 
 	{
         RB_LOG_WARN("lock is NULL (rb=%p), nothing to delete", rb);
         return;
     }
-    
+#endif
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_DELETE(mutex);
     rb->lock = NULL;
@@ -71,24 +72,23 @@ void ring_buffer_mutex_deinit(ring_buffer_t *rb)
 
 static bool mutex_write(ring_buffer_t *rb, uint8_t data)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return false;
     }
-    
     if (!rb->lock)
 	{
         RB_LOG_ERROR("lock is NULL (rb=%p)", rb);
         return false;
     }
-    
     if (!rb->buffer)
 	{
         RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
         return false;
     }
-    
+#endif
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_LOCK(mutex);
     
@@ -100,30 +100,28 @@ static bool mutex_write(ring_buffer_t *rb, uint8_t data)
 
 static bool mutex_read(ring_buffer_t *rb, uint8_t *data)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return false;
     }
-    
     if (!data) 
 	{
         RB_LOG_ERROR("data is NULL (rb=%p)", rb);
         return false;
     }
-    
     if (!rb->lock) 
 	{
         RB_LOG_ERROR("lock is NULL (rb=%p)", rb);
         return false;
     }
-    
     if (!rb->buffer) 
 	{
         RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
         return false;
     }
-    
+#endif
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_LOCK(mutex);
     
@@ -135,36 +133,33 @@ static bool mutex_read(ring_buffer_t *rb, uint8_t *data)
 
 static uint16_t mutex_write_multi(ring_buffer_t *rb, const uint8_t *data, uint16_t len)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return 0;
     }
-    
     if (!data) 
 	{
         RB_LOG_ERROR("data is NULL (rb=%p, len=%u)", rb, len);
         return 0;
     }
-    
     if (len == 0)
 	{
         RB_LOG_WARN("len is 0");
         return 0;
     }
-    
     if (!rb->lock)
 	{
         RB_LOG_ERROR("lock is NULL (rb=%p)", rb);
         return 0;
     }
-    
     if (!rb->buffer) 
 	{
         RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
         return 0;
     }
-    
+#endif
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_LOCK(mutex);
     
@@ -176,36 +171,33 @@ static uint16_t mutex_write_multi(ring_buffer_t *rb, const uint8_t *data, uint16
 
 static uint16_t mutex_read_multi(ring_buffer_t *rb, uint8_t *data, uint16_t len)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return 0;
     }
-    
     if (!data) 
 	{
         RB_LOG_ERROR("data is NULL (rb=%p, len=%u)", rb, len);
         return 0;
     }
-    
     if (len == 0)
 	{
         RB_LOG_WARN("len is 0");
         return 0;
     }
-    
     if (!rb->lock)
 	{
         RB_LOG_ERROR("lock is NULL (rb=%p)", rb);
         return 0;
     }
-    
     if (!rb->buffer)
 	{
         RB_LOG_ERROR("buffer is NULL (rb=%p)", rb);
         return 0;
     }
-    
+#endif
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_LOCK(mutex);
     
@@ -217,18 +209,18 @@ static uint16_t mutex_read_multi(ring_buffer_t *rb, uint8_t *data, uint16_t len)
 
 static uint16_t mutex_available(const ring_buffer_t *rb)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb)
 	{
         RB_LOG_ERROR("rb is NULL");
         return 0;
     }
-    
     if (!rb->lock)
 	{
         RB_LOG_ERROR("lock is NULL (rb=%p)", rb);
         return 0;
     }
-    
+#endif
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_LOCK(mutex);
     
@@ -240,18 +232,18 @@ static uint16_t mutex_available(const ring_buffer_t *rb)
 
 static uint16_t mutex_free_space(const ring_buffer_t *rb)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return 0;
     }
-    
     if (!rb->lock)
 	{
         RB_LOG_ERROR("lock is NULL (rb=%p)", rb);
         return 0;
     }
-    
+#endif
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_LOCK(mutex);
     
@@ -263,18 +255,18 @@ static uint16_t mutex_free_space(const ring_buffer_t *rb)
 
 static bool mutex_is_empty(const ring_buffer_t *rb)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return true;
     }
-    
     if (!rb->lock)
 	{
         RB_LOG_ERROR("lock is NULL (rb=%p)", rb);
         return true;
     }
-    
+#endif
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_LOCK(mutex);
     
@@ -286,18 +278,18 @@ static bool mutex_is_empty(const ring_buffer_t *rb)
 
 static bool mutex_is_full(const ring_buffer_t *rb)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb) 
 	{
         RB_LOG_ERROR("rb is NULL");
         return false;
     }
-    
     if (!rb->lock) 
 	{
         RB_LOG_ERROR("lock is NULL (rb=%p)", rb);
         return false;
     }
-    
+#endif
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_LOCK(mutex);
     
@@ -309,18 +301,18 @@ static bool mutex_is_full(const ring_buffer_t *rb)
 
 static void mutex_clear(ring_buffer_t *rb)
 {
+#if RING_BUFFER_PARANOID_CHECK	
     if (!rb)
 	{
         RB_LOG_ERROR("rb is NULL");
         return;
     }
-    
     if (!rb->lock)
 	{
         RB_LOG_ERROR("lock is NULL (rb=%p)", rb);
         return;
     }
-    
+#endif
     mutex_t mutex = (mutex_t)rb->lock;
     MUTEX_LOCK(mutex);
     
